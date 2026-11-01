@@ -1,0 +1,883 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>KAREL_Diamantes</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif}
+:root{--bg:#0a0e17;--bg2:#0f1524;--card:#151d2e;--card2:#1c2740;--text:#e9eefb;--muted:#8a94ab;--border:#26314d;--accent:#00e5a0;--accent2:#2ea8ff;--danger:#ff4d6d;--warn:#ffb020;--radius:14px}
+body.light{--bg:#eef2fa;--bg2:#f7f9fd;--card:#ffffff;--card2:#f0f4fb;--text:#0b0f19;--muted:#5a6478;--border:#dde5f2}
+html,body{height:100%}
+body{background:var(--bg);color:var(--text);transition:background .3s,color .3s;overflow-x:hidden}
+.hidden{display:none!important}
+button{cursor:pointer;font-family:inherit;border:none;background:none;color:inherit}
+input{font-family:inherit}
+
+/* ===== AUTH ===== */
+.auth{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px;background:radial-gradient(ellipse at top,#132038,var(--bg) 60%)}
+.auth-card{width:100%;max-width:400px;background:var(--card);border:1px solid var(--border);border-radius:20px;padding:28px 24px;box-shadow:0 20px 60px rgba(0,0,0,.4)}
+.auth-card h1{font-size:26px;text-align:center;background:linear-gradient(90deg,var(--accent),var(--accent2));-webkit-background-clip:text;background-clip:text;color:transparent;margin-bottom:4px}
+.auth-card .sub{text-align:center;color:var(--muted);font-size:13px;margin-bottom:20px}
+.auth-tabs{display:flex;background:var(--card2);border-radius:12px;padding:4px;margin-bottom:18px}
+.auth-tabs button{flex:1;padding:10px;border-radius:9px;font-size:14px;font-weight:600;color:var(--muted);transition:.2s}
+.auth-tabs button.active{background:var(--accent);color:#031a12}
+.auth form{display:flex;flex-direction:column;gap:10px}
+.auth input{padding:13px 14px;border-radius:12px;border:1px solid var(--border);background:var(--card2);color:var(--text);font-size:15px;outline:none}
+.auth input:focus{border-color:var(--accent)}
+.auth form button[type=submit]{padding:14px;border-radius:12px;background:linear-gradient(90deg,var(--accent),var(--accent2));color:#031a12;font-weight:800;font-size:15px;margin-top:6px}
+.msg{color:var(--danger);font-size:13px;text-align:center;min-height:16px}
+
+/* ===== APP ===== */
+#app{display:flex;flex-direction:column;min-height:100vh}
+.topbar{position:sticky;top:0;z-index:10;display:flex;justify-content:space-between;align-items:center;padding:14px 16px;background:var(--bg2);border-bottom:1px solid var(--border);backdrop-filter:blur(10px)}
+.brand{font-weight:800;font-size:17px;background:linear-gradient(90deg,var(--accent),var(--accent2));-webkit-background-clip:text;background-clip:text;color:transparent}
+.support{font-size:11px;color:var(--muted)}
+.credits-pill{background:var(--card2);border:1px solid var(--border);padding:6px 12px;border-radius:20px;font-size:13px;font-weight:700;color:var(--accent)}
+main{flex:1;padding:16px;padding-bottom:90px;max-width:760px;margin:0 auto;width:100%}
+.section-title{font-size:18px;margin-bottom:14px}
+.view{animation:fade .25s}
+@keyframes fade{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+.empty{text-align:center;color:var(--muted);padding:40px 10px;font-size:14px}
+
+/* games */
+.games{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.game-card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:20px;text-align:center;transition:.2s}
+.game-card:active{transform:scale(.97);border-color:var(--accent)}
+.game-emoji{font-size:42px}
+.game-name{margin-top:8px;font-weight:700;font-size:15px}
+.game-sub{font-size:12px;color:var(--muted);margin-top:2px}
+
+/* offers */
+.row-head{display:flex;align-items:center;gap:12px;margin-bottom:14px}
+.back-btn{background:var(--card2);border:1px solid var(--border);padding:8px 12px;border-radius:10px;font-size:13px}
+.row-head h2{font-size:17px}
+.offers{display:flex;flex-direction:column;gap:12px}
+.offer-card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:14px}
+.offer-dia{font-size:20px;font-weight:800;margin-bottom:10px}
+.offer-dia span{font-size:13px;font-weight:500;color:var(--muted)}
+.id-input{width:100%;padding:11px 13px;border-radius:10px;border:1px solid var(--border);background:var(--card2);color:var(--text);font-size:14px;margin-bottom:10px;outline:none}
+.id-input:focus{border-color:var(--accent)}
+.methods{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}
+.pay-btn{display:flex;flex-direction:column;gap:3px;align-items:center;padding:10px 6px;border-radius:10px;background:var(--card2);border:1px solid var(--border);font-size:11px;font-weight:600;transition:.15s}
+.pay-btn b{font-size:14px;color:var(--accent)}
+.pay-btn:active{transform:scale(.95);border-color:var(--accent)}
+
+/* orders list */
+.order-item{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:13px;margin-bottom:10px}
+.order-item .row{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px}
+.order-item .muted{color:var(--muted);font-size:13px;margin-top:2px}
+.badge{padding:3px 9px;border-radius:20px;font-size:11px;font-weight:700}
+.badge.proceso{background:rgba(255,176,32,.15);color:var(--warn)}
+.badge.aceptado{background:rgba(0,229,160,.15);color:var(--accent)}
+.badge.rechazado{background:rgba(255,77,109,.15);color:var(--danger)}
+
+/* cuenta */
+.card-block{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:16px;margin-bottom:12px}
+.card-block h3{font-size:14px;color:var(--muted);font-weight:600;margin-bottom:10px}
+.row-item{display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border);font-size:14px}
+.row-item:last-child{border:none}
+.row-item span{color:var(--muted)}
+.row-item b{font-weight:700}
+.btn{padding:12px;border-radius:12px;background:var(--card2);border:1px solid var(--border);font-weight:700;font-size:14px;width:100%;margin-top:8px}
+.btn.ok{background:rgba(0,229,160,.15);border-color:var(--accent);color:var(--accent)}
+.btn.no{background:rgba(255,77,109,.15);border-color:var(--danger);color:var(--danger)}
+.btn.danger{background:rgba(255,77,109,.15);border-color:var(--danger);color:var(--danger)}
+.btn.small{width:auto;padding:6px 10px;font-size:12px;margin:0}
+.toggle-row{display:flex;justify-content:space-between;align-items:center;padding:10px 0}
+.switch{width:48px;height:26px;border-radius:20px;background:var(--card2);border:1px solid var(--border);position:relative;transition:.2s}
+.switch::after{content:'';position:absolute;top:2px;left:2px;width:20px;height:20px;border-radius:50%;background:var(--muted);transition:.2s}
+.switch.on{background:rgba(0,229,160,.2);border-color:var(--accent)}
+.switch.on::after{left:24px;background:var(--accent)}
+
+/* avisos */
+.notice{background:var(--card);border:1px solid var(--border);border-left:3px solid var(--accent2);border-radius:10px;padding:12px;margin-bottom:10px;font-size:14px}
+.notice small{display:block;color:var(--muted);font-size:11px;margin-top:6px}
+
+/* admin */
+.admin-tabs{display:flex;gap:6px;overflow-x:auto;padding-bottom:8px;margin-bottom:14px}
+.admin-tabs button{padding:9px 14px;border-radius:10px;background:var(--card);border:1px solid var(--border);font-size:13px;white-space:nowrap;font-weight:600;color:var(--muted)}
+.admin-tabs button.active{background:var(--accent);color:#031a12;border-color:var(--accent)}
+.admin-card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:14px;margin-bottom:12px}
+.admin-card .grid2{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:8px 0}
+.admin-card .grid2 div{font-size:12px}
+.admin-card .grid2 span{display:block;color:var(--muted);font-size:11px}
+.admin-card .grid2 b{font-size:12px;word-break:break-all}
+.actions{display:flex;gap:8px;margin-top:10px}
+.actions .btn{flex:1;margin:0}
+.input-row{display:flex;gap:8px;margin-bottom:8px;flex-wrap:wrap}
+.input-row input{flex:1;min-width:120px;padding:11px;border-radius:10px;border:1px solid var(--border);background:var(--card2);color:var(--text);font-size:14px;outline:none}
+.input-row input:focus{border-color:var(--accent)}
+
+/* bottom nav */
+.bottomnav{position:fixed;bottom:0;left:0;right:0;display:flex;background:var(--bg2);border-top:1px solid var(--border);padding:6px 4px 10px;z-index:20}
+.bottomnav button{flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;padding:8px 2px;font-size:10px;color:var(--muted);font-weight:600;border-radius:10px}
+.bottomnav button.active{color:var(--accent)}
+.bottomnav button .ic{font-size:19px}
+
+/* ===== OVERLAY ===== */
+.overlay{position:fixed;inset:0;z-index:100;background:radial-gradient(ellipse at center,#0e1a2e,var(--bg) 80%);display:flex;flex-direction:column;padding:18px;overflow-y:auto}
+.overlay-head{display:flex;justify-content:space-between;align-items:center;padding-bottom:12px}
+.overlay-head span{font-size:14px;color:var(--muted)}
+.min-btn{background:var(--card2);border:1px solid var(--border);padding:9px 14px;border-radius:10px;font-size:13px;font-weight:700}
+.overlay-body{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;padding:10px 0}
+.circuit-wrap{position:relative;width:220px;height:220px;display:flex;align-items:center;justify-content:center}
+.circuit{position:absolute;inset:0;width:100%;height:100%}
+.trk{fill:none;stroke:var(--border);stroke-width:6}
+.prg{fill:none;stroke:var(--accent2);stroke-width:6;stroke-linecap:round;stroke-dasharray:130 435;transform-origin:110px 110px;animation:spin 1.4s linear infinite}
+.trk2{fill:none;stroke:var(--border);stroke-width:3;opacity:.5}
+.prg2{fill:none;stroke:var(--accent);stroke-width:3;stroke-linecap:round;stroke-dasharray:70 370;transform-origin:110px 110px;animation:spin 2s linear infinite reverse}
+@keyframes spin{to{transform:rotate(360deg)}}
+.circuit-icon{font-size:52px;animation:pulse 1.4s ease-in-out infinite}
+@keyframes pulse{0%,100%{transform:scale(1);opacity:.85}50%{transform:scale(1.12);opacity:1}}
+.circuit-wrap.ok .prg,.circuit-wrap.ok .prg2{stroke:var(--accent);animation:none}
+.circuit-wrap.no .prg,.circuit-wrap.no .prg2{stroke:var(--danger);animation:none}
+.circuit-wrap.ok .circuit-icon,.circuit-wrap.no .circuit-icon{animation:none;font-size:70px;font-weight:900}
+.status-text{font-size:26px;font-weight:900;letter-spacing:.5px}
+.status-text.ok{color:var(--accent)}
+.status-text.no{color:var(--danger)}
+.status-sub{color:var(--muted);font-size:14px;text-align:center;margin-bottom:14px}
+.ov-data{width:100%;max-width:420px;background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:8px 14px}
+.d-row{display:flex;justify-content:space-between;padding:9px 0;border-bottom:1px solid var(--border);font-size:13px;gap:10px}
+.d-row:last-child{border:none}
+.d-row span{color:var(--muted)}
+.d-row b{text-align:right;word-break:break-all}
+
+.min-bar{position:fixed;bottom:78px;left:12px;right:12px;background:var(--card);border:1px solid var(--accent);border-radius:12px;padding:10px 14px;display:flex;justify-content:space-between;align-items:center;z-index:50;box-shadow:0 10px 30px rgba(0,0,0,.4);font-size:13px}
+.min-bar button{background:var(--accent);color:#031a12;padding:7px 14px;border-radius:9px;font-weight:800;font-size:12px}
+
+/* toast */
+.toast{position:fixed;bottom:100px;left:50%;transform:translateX(-50%) translateY(20px);background:var(--card);border:1px solid var(--danger);color:var(--text);padding:12px 18px;border-radius:12px;font-size:14px;opacity:0;transition:.3s;z-index:200;max-width:90%;text-align:center}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+</style>
+</head>
+<body>
+
+<!-- AUTH -->
+<div id="authScreen" class="auth">
+  <div class="auth-card">
+    <h1>KAREL_Diamantes</h1>
+    <p class="sub">Soporte: 56386964</p>
+    <div class="auth-tabs">
+      <button id="tabLogin" class="active">Iniciar sesión</button>
+      <button id="tabRegister">Crear cuenta</button>
+    </div>
+    <form id="loginForm">
+      <input type="email" id="loginEmail" placeholder="Correo" required>
+      <input type="password" id="loginPass" placeholder="Contraseña" required>
+      <button type="submit">Entrar</button>
+      <p class="msg" id="loginMsg"></p>
+    </form>
+    <form id="registerForm" class="hidden">
+      <input type="text" id="regName" placeholder="Nombre" required>
+      <input type="tel" id="regPhone" placeholder="Número de teléfono" required>
+      <input type="email" id="regEmail" placeholder="Correo" required>
+      <input type="password" id="regPass" placeholder="Contraseña" required>
+      <button type="submit">Crear cuenta</button>
+      <p class="msg" id="regMsg"></p>
+    </form>
+  </div>
+</div>
+
+<!-- APP -->
+<div id="app" class="hidden">
+  <header class="topbar">
+    <div>
+      <div class="brand">KAREL_Diamantes</div>
+      <div class="support">Soporte: 56386964</div>
+    </div>
+    <div class="credits-pill" id="creditsPill">$0.00</div>
+  </header>
+  <main>
+    <section class="view" id="view-principal"></section>
+    <section class="view hidden" id="view-pedidos"></section>
+    <section class="view hidden" id="view-cuenta"></section>
+    <section class="view hidden" id="view-avisos"></section>
+    <section class="view hidden" id="view-admin"></section>
+  </main>
+  <nav class="bottomnav">
+    <button data-tab="principal" class="active"><span class="ic">🏠</span>Principal</button>
+    <button data-tab="pedidos"><span class="ic">📦</span>Pedidos</button>
+    <button data-tab="cuenta"><span class="ic">👤</span>Cuenta</button>
+    <button data-tab="avisos"><span class="ic">🔔</span>Avisos</button>
+    <button data-tab="admin" id="navAdmin" class="hidden"><span class="ic">⚙️</span>Admin</button>
+  </nav>
+</div>
+
+<!-- OVERLAY -->
+<div id="overlay" class="overlay hidden">
+  <div class="overlay-head">
+    <span>Pedido <b id="ovId" style="color:var(--text)"></b></span>
+    <button class="min-btn" id="ovMin">— Minimizar</button>
+  </div>
+  <div class="overlay-body">
+    <div class="circuit-wrap" id="circuitWrap">
+      <svg class="circuit" viewBox="0 0 220 220">
+        <circle cx="110" cy="110" r="90" class="trk"/>
+        <circle cx="110" cy="110" r="90" class="prg"/>
+        <circle cx="110" cy="110" r="70" class="trk2"/>
+        <circle cx="110" cy="110" r="70" class="prg2"/>
+      </svg>
+      <div class="circuit-icon" id="circuitIcon">⏳</div>
+    </div>
+    <h2 class="status-text" id="ovStatus">En Proceso</h2>
+    <p class="status-sub" id="ovSub">Estamos verificando tu pago...</p>
+    <div class="ov-data" id="ovData"></div>
+  </div>
+</div>
+
+<div id="minBar" class="min-bar hidden">
+  <span id="minBarText">Pedido en proceso</span>
+  <button id="minBarOpen">Abrir</button>
+</div>
+
+<script>
+/* ================= ESTADO ================= */
+const state = {
+  token: localStorage.getItem('karel_token') || null,
+  user: null,
+  offers: {},
+  notices: [],
+  orders: [],
+  adminOrders: [],
+  clients: [],
+  tab: 'principal',
+  selectedGame: null,
+  activeOrder: null,
+  lastOrder: null,
+  adminTab: 'clientes'
+};
+
+async function api(method, path, body) {
+  const res = await fetch('/api' + path, {
+    method,
+    headers: {
+      'Content-Type': 'application/json',
+      ...(state.token ? { 'x-token': state.token } : {})
+    },
+    body: body ? JSON.stringify(body) : undefined
+  });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(data.error || 'Error');
+  return data;
+}
+
+function toast(msg) {
+  const t = document.createElement('div');
+  t.className = 'toast';
+  t.textContent = msg;
+  document.body.appendChild(t);
+  requestAnimationFrame(() => t.classList.add('show'));
+  setTimeout(() => { t.classList.remove('show'); setTimeout(() => t.remove(), 320); }, 2600);
+}
+
+/* ================= TEMA ================= */
+function applyTheme() {
+  const light = localStorage.getItem('karel_theme') === 'light';
+  document.body.classList.toggle('light', light);
+}
+
+/* ================= AUTH UI ================= */
+const tabLogin = document.getElementById('tabLogin');
+const tabRegister = document.getElementById('tabRegister');
+const loginForm = document.getElementById('loginForm');
+const registerForm = document.getElementById('registerForm');
+
+tabLogin.onclick = () => {
+  tabLogin.classList.add('active'); tabRegister.classList.remove('active');
+  loginForm.classList.remove('hidden'); registerForm.classList.add('hidden');
+};
+tabRegister.onclick = () => {
+  tabRegister.classList.add('active'); tabLogin.classList.remove('active');
+  registerForm.classList.remove('hidden'); loginForm.classList.add('hidden');
+};
+
+loginForm.addEventListener('submit', async e => {
+  e.preventDefault();
+  document.getElementById('loginMsg').textContent = '';
+  try {
+    const { token, user } = await api('POST', '/login', {
+      email: document.getElementById('loginEmail').value.trim(),
+      password: document.getElementById('loginPass').value
+    });
+    state.token = token; state.user = user;
+    localStorage.setItem('karel_token', token);
+    await afterLogin();
+  } catch (err) {
+    document.getElementById('loginMsg').textContent = err.message;
+  }
+});
+
+registerForm.addEventListener('submit', async e => {
+  e.preventDefault();
+  document.getElementById('regMsg').textContent = '';
+  try {
+    const { token, user } = await api('POST', '/register', {
+      name: document.getElementById('regName').value.trim(),
+      phone: document.getElementById('regPhone').value.trim(),
+      email: document.getElementById('regEmail').value.trim(),
+      password: document.getElementById('regPass').value
+    });
+    state.token = token; state.user = user;
+    localStorage.setItem('karel_token', token);
+    await afterLogin();
+  } catch (err) {
+    document.getElementById('regMsg').textContent = err.message;
+  }
+});
+
+async function afterLogin() {
+  await loadData();
+  showApp();
+  renderAll();
+}
+
+async function loadData() {
+  const [o, n, or] = await Promise.all([
+    api('GET', '/offers'),
+    api('GET', '/notices'),
+    api('GET', '/orders')
+  ]);
+  state.offers = o.offers;
+  state.notices = n.notices;
+  state.orders = or.orders;
+  const me = await api('GET', '/me');
+  state.user = me.user;
+}
+
+function showAuth() {
+  document.getElementById('authScreen').classList.remove('hidden');
+  document.getElementById('app').classList.add('hidden');
+}
+function showApp() {
+  document.getElementById('authScreen').classList.add('hidden');
+  document.getElementById('app').classList.remove('hidden');
+  document.getElementById('navAdmin').classList.toggle('hidden', !state.user.isAdmin);
+}
+
+/* ================= LOGOUT ================= */
+function logout() {
+  api('POST', '/logout').catch(() => {});
+  state.token = null; state.user = null;
+  localStorage.removeItem('karel_token');
+  localStorage.removeItem('karel_activeOrder');
+  showAuth();
+}
+
+/* ================= TABS ================= */
+document.querySelectorAll('.bottomnav button[data-tab]').forEach(btn => {
+  btn.addEventListener('click', () => switchTab(btn.dataset.tab));
+});
+
+function switchTab(tab) {
+  state.tab = tab;
+  document.querySelectorAll('.bottomnav button').forEach(b => b.classList.toggle('active', b.dataset.tab === tab));
+  document.querySelectorAll('.view').forEach(v => v.classList.add('hidden'));
+  document.getElementById('view-' + tab).classList.remove('hidden');
+  renderAll();
+}
+
+function renderAll() {
+  renderTopbar();
+  if (state.tab === 'principal') renderPrincipal();
+  if (state.tab === 'pedidos') renderPedidos();
+  if (state.tab === 'cuenta') renderCuenta();
+  if (state.tab === 'avisos') renderAvisos();
+  if (state.tab === 'admin') renderAdmin();
+}
+
+function renderTopbar() {
+  document.getElementById('creditsPill').textContent = '$' + (state.user.credits || 0).toFixed(2);
+}
+
+/* ================= PRINCIPAL ================= */
+function renderPrincipal() {
+  const el = document.getElementById('view-principal');
+  if (!state.selectedGame) {
+    const games = Object.entries(state.offers);
+    el.innerHTML = `<h2 class="section-title">Juegos disponibles</h2>
+      <div class="games">
+        ${games.length ? games.map(([k, g]) => `
+          <div class="game-card" onclick="selectGame('${k}')">
+            ${g.image 
+              ? `<img src="${g.image}" style="width:100%;height:80px;object-fit:contain;margin-bottom:10px;">` 
+              : `<div class="game-emoji">${g.emoji || '🎮'}</div>`}
+            <div class="game-name">${g.name}</div>
+            <div class="game-sub">${g.items.length} ofertas</div>
+          </div>`).join('') : '<div class="empty">No hay juegos disponibles</div>'}
+      </div>`;
+  } else {
+    const g = state.offers[state.selectedGame];
+    if (!g) { state.selectedGame = null; return renderPrincipal(); }
+    el.innerHTML = `
+      <div class="row-head">
+        <button class="back-btn" onclick="selectGame(null)">← Volver</button>
+        <h2>${g.emoji} ${g.name}</h2>
+      </div>
+      
+      ${g.image ? `<img src="${g.image}" style="width:100%;max-height:180px;object-fit:contain;background:var(--card);border-radius:var(--radius);padding:10px;margin-bottom:14px;border:1px solid var(--border);">` : ''}
+
+      <div class="offers">
+        ${g.items.map(it => `
+          <div class="offer-card">
+            <div class="offer-dia">💎 ${it.diamonds} <span>diamantes</span></div>
+            <input class="id-input" id="id-${it.diamonds}" placeholder="Tu ID de ${g.name}">
+            <div class="methods">
+              ${['USDT', 'Saldo', 'Transferencia'].map(m => {
+                const label = m === 'USDT' ? '🪙 USDT' : m === 'Saldo' ? '💰 Saldo' : '🏦 Transf.';
+                return `<button class="pay-btn" onclick="order('${state.selectedGame}',${it.diamonds},'${m}')">
+                  <span>${label}</span><b>$${it.prices[m].toFixed(2)}</b>
+                </button>`;
+              }).join('')}
+            </div>
+          </div>`).join('')}
+      </div>`;
+  }
+}
+
+function selectGame(k) {
+  state.selectedGame = k;
+  renderPrincipal();
+}
+
+/* ================= CREAR PEDIDO ================= */
+async function order(gameKey, diamonds, method) {
+  const input = document.getElementById('id-' + diamonds);
+  const gameId = input ? input.value.trim() : '';
+  if (!gameId) return toast('Ingresa tu ID de juego');
+  try {
+    const { order, user } = await api('POST', '/order', { gameKey, diamonds, method, gameId });
+    state.user = user;
+    renderTopbar();
+    state.lastOrder = order;
+    openOverlay(order.id);
+    const or = await api('GET', '/orders');
+    state.orders = or.orders;
+  } catch (e) { toast(e.message); }
+}
+
+/* ================= OVERLAY ================= */
+const overlayEl = document.getElementById('overlay');
+const minBar = document.getElementById('minBar');
+const circuitWrap = document.getElementById('circuitWrap');
+const ovStatus = document.getElementById('ovStatus');
+const ovSub = document.getElementById('ovSub');
+const circuitIcon = document.getElementById('circuitIcon');
+const ovData = document.getElementById('ovData');
+
+function openOverlay(id) {
+  state.activeOrder = id;
+  localStorage.setItem('karel_activeOrder', id);
+  overlayEl.classList.remove('hidden');
+  minBar.classList.add('hidden');
+  api('GET', '/order/' + id).then(({ order }) => updateOverlay(order)).catch(() => {});
+}
+
+document.getElementById('ovMin').onclick = () => {
+  overlayEl.classList.add('hidden');
+  minBar.classList.remove('hidden');
+  updateMinBar();
+};
+document.getElementById('minBarOpen').onclick = () => {
+  minBar.classList.add('hidden');
+  overlayEl.classList.remove('hidden');
+};
+
+function updateMinBar() {
+  const o = state.lastOrder;
+  const txt = o ? `${o.game} · 💎${o.diamonds} · ${statusLabel(o.status)}` : 'Pedido';
+  document.getElementById('minBarText').textContent = txt;
+}
+
+function statusLabel(s) {
+  return s === 'aceptado' ? 'Aceptado' : s === 'rechazado' ? 'Rechazado' : 'En Proceso';
+}
+
+function updateOverlay(order) {
+  state.lastOrder = order;
+  document.getElementById('ovId').textContent = order.id;
+  circuitWrap.className = 'circuit-wrap';
+  ovStatus.className = 'status-text';
+  if (order.status === 'aceptado') {
+    circuitWrap.classList.add('ok');
+    ovStatus.classList.add('ok');
+    ovStatus.textContent = 'Aceptado';
+    ovSub.textContent = '¡Tu pedido fue aprobado! 🎉';
+    circuitIcon.textContent = '✓';
+  } else if (order.status === 'rechazado') {
+    circuitWrap.classList.add('no');
+    ovStatus.classList.add('no');
+    ovStatus.textContent = 'Rechazado';
+    ovSub.textContent = 'Tu pedido fue rechazado. Soporte: 56386964';
+    circuitIcon.textContent = '✕';
+  } else {
+    ovStatus.textContent = 'En Proceso';
+    ovSub.textContent = 'Estamos verificando tu pago...';
+    circuitIcon.textContent = '⏳';
+  }
+  ovData.innerHTML = `
+    <div class="d-row"><span>Pedido</span><b>${order.id}</b></div>
+    <div class="d-row"><span>Juego</span><b>${order.game}</b></div>
+    <div class="d-row"><span>Diamantes</span><b>💎 ${order.diamonds}</b></div>
+    <div class="d-row"><span>ID de juego</span><b>${order.gameId}</b></div>
+    <div class="d-row"><span>Método</span><b>${order.method}</b></div>
+    <div class="d-row"><span>Total</span><b>$${order.price.toFixed(2)}</b></div>
+    <div class="d-row"><span>Fecha</span><b>${new Date(order.date).toLocaleString()}</b></div>`;
+  updateMinBar();
+}
+
+/* ================= PEDIDOS (usuario) ================= */
+function renderPedidos() {
+  const el = document.getElementById('view-pedidos');
+  if (!state.orders.length) { el.innerHTML = '<div class="empty">No tienes pedidos aún</div>'; return; }
+  el.innerHTML = `<h2 class="section-title">Mis pedidos</h2>` + state.orders.map(o => `
+    <div class="order-item">
+      <div class="row">
+        <b>${o.game} · 💎 ${o.diamonds}</b>
+        <span class="badge ${o.status}">${statusLabel(o.status)}</span>
+      </div>
+      <div class="muted">ID juego: ${o.gameId}</div>
+      <div class="muted">${o.method} · Total: $${o.price.toFixed(2)}</div>
+      <div class="muted" style="font-size:11px">${new Date(o.date).toLocaleString()}</div>
+    </div>`).join('');
+}
+
+/* ================= CUENTA ================= */
+function renderCuenta() {
+  const el = document.getElementById('view-cuenta');
+  const u = state.user;
+  const isLight = localStorage.getItem('karel_theme') === 'light';
+  el.innerHTML = `
+    <h2 class="section-title">Mi cuenta</h2>
+    <div class="card-block">
+      <h3>Información</h3>
+      <div class="row-item"><span>Nombre</span><b>${u.name}</b></div>
+      <div class="row-item"><span>Correo</span><b>${u.email}</b></div>
+      <div class="row-item"><span>Teléfono</span><b>${u.phone}</b></div>
+      <div class="row-item"><span>Créditos</span><b style="color:var(--accent)">$${u.credits.toFixed(2)}</b></div>
+    </div>
+    <div class="card-block">
+      <h3>Preferencias</h3>
+      <div class="toggle-row">
+        <span style="font-size:14px">Tema claro</span>
+        <div id="themeSwitch" class="switch ${isLight ? 'on' : ''}"></div>
+      </div>
+    </div>
+    <div class="card-block">
+      <h3>Cambiar contraseña</h3>
+      <input class="id-input" id="pwdCur" type="password" placeholder="Contraseña actual">
+      <input class="id-input" id="pwdNew" type="password" placeholder="Nueva contraseña">
+      <button class="btn ok" onclick="changePassword()">Actualizar contraseña</button>
+    </div>
+    <button class="btn danger" onclick="logout()">Cerrar sesión</button>
+  `;
+  document.getElementById('themeSwitch').onclick = () => {
+    const light = localStorage.getItem('karel_theme') === 'light';
+    localStorage.setItem('karel_theme', light ? 'dark' : 'light');
+    applyTheme();
+    renderCuenta();
+  };
+}
+
+async function changePassword() {
+  try {
+    await api('POST', '/change-password', {
+      current: document.getElementById('pwdCur').value,
+      next: document.getElementById('pwdNew').value
+    });
+    toast('✓ Contraseña actualizada');
+    document.getElementById('pwdCur').value = '';
+    document.getElementById('pwdNew').value = '';
+  } catch (e) { toast(e.message); }
+}
+
+/* ================= AVISOS ================= */
+function renderAvisos() {
+  const el = document.getElementById('view-avisos');
+  if (!state.notices.length) { el.innerHTML = '<div class="empty">Sin avisos por ahora</div>'; return; }
+  el.innerHTML = `<h2 class="section-title">Avisos</h2>` + state.notices.map(n => `
+    <div class="notice">${n.text}<small>${new Date(n.date).toLocaleString()}</small></div>
+  `).join('');
+}
+
+/* ================= ADMIN ================= */
+function renderAdmin() {
+  const el = document.getElementById('view-admin');
+  const tabs = ['clientes', 'pedidos', 'creditos', 'ofertas', 'avisos'];
+  el.innerHTML = `
+    <h2 class="section-title">Panel de Administración</h2>
+    <div class="admin-tabs">
+      ${tabs.map(t => `<button class="${state.adminTab === t ? 'active' : ''}" onclick="setAdminTab('${t}')">${t[0].toUpperCase() + t.slice(1)}</button>`).join('')}
+    </div>
+    <div id="adminContent"></div>`;
+  renderAdminContent();
+}
+
+async function setAdminTab(t) {
+  state.adminTab = t;
+  if (t === 'clientes') await loadAdminClients();
+  if (t === 'pedidos') await loadAdminOrders();
+  if (t === 'ofertas') await loadAdminOffers();
+  if (t === 'avisos') await loadAdminNotices();
+  renderAdmin();
+}
+
+async function loadAdminClients() { const r = await api('GET', '/admin/clients'); state.clients = r.clients; }
+async function loadAdminOrders() { const r = await api('GET', '/admin/orders'); state.adminOrders = r.orders; }
+async function loadAdminOffers() { const r = await api('GET', '/offers'); state.offers = r.offers; }
+async function loadAdminNotices() { const r = await api('GET', '/notices'); state.notices = r.notices; }
+
+function renderAdminContent() {
+  const c = document.getElementById('adminContent');
+  if (state.adminTab === 'clientes') {
+    if (!state.clients.length) { c.innerHTML = '<div class="empty">Cargando...</div>'; loadAdminClients().then(() => renderAdmin()); return; }
+    c.innerHTML = state.clients.map(u => `
+      <div class="admin-card">
+        <div class="row-item"><span>Nombre</span><b>${u.name}</b></div>
+        <div class="row-item"><span>Correo</span><b>${u.email}</b></div>
+        <div class="row-item"><span>Créditos</span><b style="color:var(--accent)">$${u.credits.toFixed(2)}</b></div>
+        <div class="row-item"><span>Admin</span><b>${u.isAdmin ? '✅' : '❌'}</b></div>
+        <div class="row-item"><span>Baneado</span><b>${u.banned ? '🚫' : '✅'}</b></div>
+        <div class="actions">
+          <button class="btn small" onclick="adminClient('${u.email}',{isAdmin:${!u.isAdmin}})">${u.isAdmin ? 'Quitar admin' : 'Hacer admin'}</button>
+          <button class="btn small ${u.banned ? 'ok' : 'danger'}" onclick="adminClient('${u.email}',{banned:${!u.banned}})">${u.banned ? 'Desbanear' : 'Banear'}</button>
+        </div>
+      </div>`).join('');
+  }
+  else if (state.adminTab === 'pedidos') {
+    if (!state.adminOrders.length) { c.innerHTML = '<div class="empty">Sin pedidos</div>'; return; }
+    c.innerHTML = state.adminOrders.map(o => `
+      <div class="admin-card">
+        <div class="row" style="display:flex;justify-content:space-between;align-items:center">
+          <b>${o.id}</b><span class="badge ${o.status}">${statusLabel(o.status)}</span>
+        </div>
+        <div class="grid2">
+          <div><span>Cliente</span><b>${o.userName}</b></div>
+          <div><span>Correo</span><b>${o.userEmail}</b></div>
+          <div><span>Juego</span><b>${o.game}</b></div>
+          <div><span>Diamantes</span><b>💎 ${o.diamonds}</b></div>
+          <div><span>ID juego</span><b>${o.gameId}</b></div>
+          <div><span>Método</span><b>${o.method}</b></div>
+          <div><span>Total</span><b>$${o.price.toFixed(2)}</b></div>
+          <div><span>API ID</span><b>${o.proveedor_id || 'N/A'}</b></div>
+          <div><span>Fecha</span><b>${new Date(o.date).toLocaleString()}</b></div>
+        </div>
+        ${o.status === 'proceso' ? `
+          <div class="actions">
+            <button class="btn ok" onclick="setOrderStatus('${o.id}','aceptado')">✓ Aceptar</button>
+            <button class="btn no" onclick="setOrderStatus('${o.id}','rechazado')">✕ Rechazar</button>
+          </div>` : ''}
+      </div>`).join('');
+  }
+  else if (state.adminTab === 'creditos') {
+    c.innerHTML = `
+      <div class="admin-card">
+        <h3>Enviar / Quitar créditos</h3>
+        <div class="input-row"><input id="credEmail" placeholder="Correo del cliente"></div>
+        <div class="input-row"><input id="credAmount" type="number" step="0.01" placeholder="Cantidad (ej: 10)"></div>
+        <div class="actions">
+          <button class="btn ok" onclick="adjustCredits(1)">+ Enviar</button>
+          <button class="btn no" onclick="adjustCredits(-1)">− Quitar</button>
+        </div>
+      </div>`;
+  }
+  else if (state.adminTab === 'ofertas') {
+    c.innerHTML = `
+      <div class="admin-card" style="border-color: var(--accent); background: rgba(0, 229, 160, 0.05);">
+        <h3 style="color: var(--accent);">Integración con Joystick Shop</h3>
+        <p style="font-size:12px; color:var(--muted); margin-bottom:10px;">Descarga el catálogo y precios reales automáticamente.</p>
+        <button class="btn ok" onclick="syncCatalog()">🔄 Sincronizar Precios desde API</button>
+      </div>
+    `;
+
+    let html = '';
+    for (const [gid, g] of Object.entries(state.offers)) {
+      html += `<div class="admin-card">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+          <h3 style="margin:0">${g.emoji || '🎮'} ${g.name}</h3>
+          <button class="btn small danger" onclick="deleteGame('${gid}')">Eliminar</button>
+        </div>`;
+      g.items.forEach((it, idx) => {
+        html += `<div style="border:1px solid var(--border);border-radius:10px;padding:10px;margin-bottom:8px">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+            <b>💎 ${it.diamonds}</b>
+            <button class="btn small danger" onclick="deleteOffer('${gid}',${idx})">x</button>
+          </div>
+          <div class="input-row">
+            ${['USDT', 'Saldo', 'Transferencia'].map(m => `
+              <input type="number" step="0.01" value="${it.prices[m]}" placeholder="${m}"
+                onchange="updatePrice('${gid}',${idx},'${m}',this.value)" style="min-width:80px">
+            `).join('')}
+          </div>
+        </div>`;
+      });
+      html += `<div class="input-row">
+          <input type="number" id="nd-${gid}" placeholder="💎 Diamantes" style="min-width:90px">
+          <input type="number" step="0.01" id="nu-${gid}" placeholder="USDT" style="min-width:70px">
+          <input type="number" step="0.01" id="ns-${gid}" placeholder="Saldo" style="min-width:70px">
+          <input type="number" step="0.01" id="nt-${gid}" placeholder="Transf." style="min-width:70px">
+          <button class="btn small ok" onclick="addOffer('${gid}')">+ Oferta</button>
+        </div>
+      </div>`;
+    }
+    html += `<div class="admin-card">
+      <h3>Agregar juego</h3>
+      <div class="input-row">
+        <input id="newGameName" placeholder="Nombre del juego">
+        <input id="newGameEmoji" placeholder="Emoji" value="🎮" style="max-width:70px">
+      </div>
+      <button class="btn ok" onclick="addGame()">+ Agregar juego</button>
+    </div>
+    <button class="btn ok" onclick="saveOffers()" style="margin-top:6px">💾 Guardar cambios</button>`;
+    
+    c.innerHTML += html;
+  }
+  else if (state.adminTab === 'avisos') {
+    c.innerHTML = `
+      <div class="admin-card">
+        <h3>Nuevo aviso</h3>
+        <div class="input-row"><input id="newNotice" placeholder="Escribe un aviso..."></div>
+        <button class="btn ok" onclick="addNotice()">Publicar aviso</button>
+      </div>
+      ${state.notices.map(n => `
+        <div class="admin-card" style="display:flex;justify-content:space-between;gap:10px;align-items:center">
+          <div>
+            <div>${n.text}</div>
+            <small style="color:var(--muted);font-size:11px">${new Date(n.date).toLocaleString()}</small>
+          </div>
+          <button class="btn small danger" onclick="deleteNotice('${n.id}')">Eliminar</button>
+        </div>`).join('')}`;
+  }
+}
+
+/* ================= ACCIONES ADMIN ================= */
+async function adminClient(email, patch) {
+  try { await api('POST', '/admin/client', { email, ...patch }); await loadAdminClients(); renderAdmin(); }
+  catch (e) { toast(e.message); }
+}
+async function setOrderStatus(id, status) {
+  try { await api('POST', '/admin/order', { id, status }); await loadAdminOrders(); renderAdmin(); }
+  catch (e) { toast(e.message); }
+}
+async function adjustCredits(sign) {
+  const email = document.getElementById('credEmail').value.trim();
+  const amount = parseFloat(document.getElementById('credAmount').value);
+  if (!email || isNaN(amount)) return toast('Completa los campos');
+  try {
+    await api('POST', '/admin/credits', { email, amount: amount * sign });
+    toast('✓ Créditos actualizados');
+    document.getElementById('credEmail').value = '';
+    document.getElementById('credAmount').value = '';
+  } catch (e) { toast(e.message); }
+}
+function updatePrice(gid, idx, method, val) {
+  state.offers[gid].items[idx].prices[method] = parseFloat(val) || 0;
+}
+function addOffer(gid) {
+  const d = document.getElementById('nd-' + gid).value;
+  if (!d) return toast('Falta cantidad de diamantes');
+  state.offers[gid].items.push({
+    diamonds: parseInt(d),
+    prices: {
+      USDT: parseFloat(document.getElementById('nu-' + gid).value) || 0,
+      Saldo: parseFloat(document.getElementById('ns-' + gid).value) || 0,
+      Transferencia: parseFloat(document.getElementById('nt-' + gid).value) || 0
+    }
+  });
+  renderAdmin();
+}
+function deleteOffer(gid, idx) { state.offers[gid].items.splice(idx, 1); renderAdmin(); }
+function deleteGame(gid) {
+  if (!confirm('¿Eliminar este juego?')) return;
+  delete state.offers[gid]; renderAdmin();
+}
+async function addGame() {
+  const name = document.getElementById('newGameName').value.trim();
+  const emoji = document.getElementById('newGameEmoji').value.trim() || '🎮';
+  if (!name) return toast('Falta nombre del juego');
+  const gid = 'g' + Date.now().toString(36);
+  state.offers[gid] = { name, emoji, items: [] };
+  await saveOffers(true);
+}
+async function saveOffers(silent) {
+  try {
+    await api('POST', '/admin/offers', { offers: state.offers });
+    if (!silent) toast('✓ Ofertas guardadas');
+    renderAdmin();
+  } catch (e) { toast(e.message); }
+}
+function addNotice() {
+  const text = document.getElementById('newNotice').value.trim();
+  if (!text) return;
+  state.notices.unshift({ id: 'n' + Date.now(), text, date: new Date().toISOString() });
+  saveNotices();
+}
+function deleteNotice(id) {
+  state.notices = state.notices.filter(n => n.id !== id);
+  saveNotices();
+}
+async function saveNotices() {
+  try { await api('POST', '/admin/notices', { notices: state.notices }); renderAdmin(); }
+  catch (e) { toast(e.message); }
+}
+
+/* ================= SINCRONIZACIÓN API ================= */
+async function syncCatalog() {
+  if(!confirm('¿Seguro que quieres sobrescribir las ofertas actuales con las de Joystick Shop?')) return;
+  toast('Sincronizando catálogo...');
+  try {
+    const res = await api('POST', '/admin/sync-catalog');
+    state.offers = res.offers;
+    toast('✓ Catálogo actualizado');
+    renderAdmin();
+  } catch (e) {
+    toast(e.message);
+  }
+}
+
+/* ================= POLLING ================= */
+setInterval(async () => {
+  if (!state.token || !state.user) return;
+  if (state.activeOrder && !overlayEl.classList.contains('hidden')) {
+    try {
+      const { order } = await api('GET', '/order/' + state.activeOrder);
+      updateOverlay(order);
+    } catch (e) {}
+  }
+  if (state.tab === 'pedidos') {
+    try { const r = await api('GET', '/orders'); state.orders = r.orders; renderPedidos(); } catch (e) {}
+  }
+}, 3000);
+
+/* ================= INIT ================= */
+async function init() {
+  applyTheme();
+  if (state.token) {
+    try {
+      const { user } = await api('GET', '/me');
+      state.user = user;
+      await loadData();
+      showApp();
+      renderAll();
+      const active = localStorage.getItem('karel_activeOrder');
+      if (active) {
+        try {
+          const { order } = await api('GET', '/order/' + active);
+          state.activeOrder = active;
+          state.lastOrder = order;
+          minBar.classList.remove('hidden');
+          updateMinBar();
+        } catch (e) { localStorage.removeItem('karel_activeOrder'); }
+      }
+    } catch (e) {
+      localStorage.removeItem('karel_token');
+      showAuth();
+    }
+  } else {
+    showAuth();
+  }
+}
+init();
+</script>
+</body>
+  </html>
